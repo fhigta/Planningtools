@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Capital Strategy Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Executive Navy & Gold -->
+    <!-- Application Structure Plan: The application is designed as an interactive "Strategic Capital Dashboard." The structure is user-driven rather than linear. It begins with a high-level prompt asking the user to select their primary goal (Legacy, Growth, or Income). This selection acts as the primary filter, dynamically reconfiguring the main content area to provide a "deep dive" into the most relevant strategy. This is followed by static, but interactive, "Comparative Analytics" and "Risk Analysis" sections with charts that allow for at-a-glance comparison. This structure was chosen because it directly mirrors the decision-making process outlined in the report, transforming a passive reading experience into an active exploration tailored to the user's personal priorities, which is more effective for client engagement. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Multi-dimensional strategy comparison (Risk, Liquidity, etc.). Goal: Compare trade-offs. Viz/Method: Interactive Radar Chart (Chart.js/Canvas). Interaction: Tooltips on hover provide data. Justification: A radar chart provides an immediate visual "fingerprint" of each strategy's strengths, making complex, multi-attribute comparisons more intuitive than a dense table.
+        2. Report Info: Legacy value potential ($2M vs. $4.5M+). Goal: Compare outcomes. Viz/Method: Dynamic Bar Chart (Chart.js/Canvas). Interaction: Tooltips on hover show precise values. Justification: A bar chart offers the most direct and visually impactful way to compare the starkly different legacy outcomes, a key point in the report.
+        3. Report Info: Sequence of Returns Risk explanation. Goal: Explain a complex risk. Viz/Method: Dual Line Chart (Chart.js/Canvas). Interaction: N/A, static display. Justification: A line chart is the clearest way to visualize the diverging paths of two portfolios over time, making an abstract concept concrete and understandable.
+        4. Report Info: Pros & Cons lists. Goal: Inform. Viz/Method: Styled two-column lists (HTML/CSS). Interaction: N/A. Justification: This is the most scannable and digestible format for presenting balanced arguments.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Lato', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, .font-lora { font-family: 'Lora', serif; }
+        .tab-active { background-color: #0D47A1; color: #FFFFFF; border-color: #D4AF37; }
+        .tab-inactive { background-color: #E3F2FD; color: #1976D2; }
+        .content-fade-in { animation: fadeIn 0.6s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chart-container { position: relative; width: 100%; max-width: 550px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .icon-box {
+            width: 60px; height: 60px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;
+            background-color: #E3F2FD; color: #0D47A1; font-size: 1.8rem; font-weight: 600;
+        }
+        .view-tab { border: 2px solid transparent; transition: all 0.3s ease; }
+        .view-tab.tab-active { box-shadow: 0 4px 14px 0 rgba(13, 71, 161, 0.25); transform: translateY(-2px); }
+        .card { background-color: #fff; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900">Strategic Capital Allocation Framework</h1>
+            <p class="mt-2 text-lg text-slate-600 font-lora">An Interactive Analysis for a $2 Million Portfolio</p>
+        </header>
+
+        <main>
+            <section id="goal-selector" class="mb-12 p-6 card">
+                <h2 class="text-2xl font-semibold text-center text-slate-800 mb-1">Define the Primary Objective</h2>
+                <p class="text-center text-slate-600 mb-6">Your core priority determines the optimal strategy. Select a goal to explore the corresponding solution.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="app.selectView('legacy')" data-view="legacy" class="view-tab p-4 rounded-lg font-semibold text-lg flex flex-col items-center">
+                        <div class="icon-box font-lora">L</div> Legacy & Growth
+                    </button>
+                    <button onclick="app.selectView('growth')" data-view="growth" class="view-tab p-4 rounded-lg font-semibold text-lg flex flex-col items-center">
+                        <div class="icon-box font-lora">G</div> Growth & Control
+                    </button>
+                    <button onclick="app.selectView('income')" data-view="income" class="view-tab p-4 rounded-lg font-semibold text-lg flex flex-col items-center">
+                        <div class="icon-box font-lora">I</div> Income & Certainty
+                    </button>
+                </div>
+            </section>
+
+            <div id="content-display" class="card p-6 md:p-8 min-h-[500px]">
+                <!-- Dynamic Content Will Be Injected Here -->
+            </div>
+            
+            <section id="comparison-section" class="mt-12">
+                <h2 class="text-3xl font-bold text-center mb-8 text-slate-900">Comparative Analytics</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold text-center mb-2">Strategic Attributes Profile</h3>
+                        <p class="text-sm text-center text-slate-500 mb-4">A visual comparison across key financial dimensions. A larger shape indicates more of a given attribute.</p>
+                        <div class="chart-container">
+                            <canvas id="comparisonRadarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold text-center mb-2">Illustrative Legacy Value</h3>
+                        <p class="text-sm text-center text-slate-500 mb-4">The potential value transferred to heirs under each strategy, based on the report's core assumptions.</p>
+                        <div class="chart-container">
+                            <canvas id="legacyBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <section id="conclusion" class="mt-12 card p-8 bg-slate-800 text-white">
+                <h2 class="text-3xl font-bold text-center mb-6">Conclusion: The Blended Strategy for Diversified Outcomes</h2>
+                <p class="text-lg text-slate-300 text-center max-w-4xl mx-auto mb-6">
+                    Sophisticated planning often involves blending strategies to achieve multiple objectives. By combining a foundation of guaranteed income with a vehicle for growth and legacy, you can create a more resilient and comprehensive financial future.
+                </p>
+                <div class="flex flex-col md:flex-row justify-center items-stretch gap-8 mt-6">
+                    <div class="text-center p-6 bg-slate-700 rounded-lg border border-slate-600 flex-1">
+                        <h4 class="font-bold text-xl text-white">Certainty Foundation</h4>
+                        <p class="text-slate-300 mt-2">Allocate a portion to a <strong class="font-semibold text-sky-300">SPIA</strong> to create a guaranteed "income floor," covering all essential expenses for life.</p>
+                    </div>
+                    <div class="text-5xl font-thin text-slate-500 self-center">+</div>
+                    <div class="text-center p-6 bg-slate-700 rounded-lg border border-slate-600 flex-1">
+                        <h4 class="font-bold text-xl text-white">Growth & Legacy Engine</h4>
+                        <p class="text-slate-300 mt-2">Allocate the remainder to an <strong class="font-semibold text-amber-300">S-VUL</strong> to create a leveraged, tax-free inheritance with market-driven growth potential.</p>
+                    </div>
+                </div>
+                <p class="text-lg text-slate-200 text-center max-w-4xl mx-auto mt-8 font-semibold font-lora">
+                    This combination provides income security with the powerful upside of a maximized, tax-efficient legacy.
+                </p>
+            </section>
+        </main>
+    </div>
+
+<script>
+const appData = {
+    legacy: {
+        title: 'Survivorship Variable Universal Life (S-VUL)',
+        icon: 'L',
+        tagline: 'A vehicle for legacy maximization and market-driven growth.',
+        description: 'This strategy is for those seeking to create the largest possible inheritance, fueled by direct market participation. It combines a leveraged, tax-free death benefit with a cash value component invested in market sub-accounts, offering uncapped growth potential but also direct market risk.',
+        pros: [
+            'Highly Leveraged Death Benefit',
+            'Uncapped cash value growth potential',
+            'Tax-Free access to cash via policy loans',
+            'Greater control over underlying investments'
+        ],
+        cons: [
+            'Cash value is exposed to direct market risk',
+            'Higher complexity and multiple fee layers',
+            'Risk of policy lapse if sub-accounts underperform',
+            'Requires active management and monitoring'
+        ],
+        quotable: '"Think of it as a private investment account wrapped inside a tax-free fortress for your heirs."'
+    },
+    growth: {
+        title: 'Taxable Investment Portfolio',
+        icon: 'G',
+        tagline: 'An engine for uncapped growth and full control.',
+        description: 'This is the traditional path for wealth creation, best for those with a high risk tolerance who want to maximize long-term growth and maintain complete control and liquidity over their capital. You participate in all of the market\'s potential, but also shoulder all of its risks, including the critical "sequence of returns" risk.',
+        pros: [
+            'Highest potential for long-term growth',
+            'Full control over investment decisions',
+            'Completely liquid at all times',
+            'Heirs receive a "step-up in basis" at death'
+        ],
+        cons: [
+            'Fully exposed to all market risk',
+            'Sequence of returns risk can be devastating',
+            'No guarantees of income or principal',
+            'Subject to ongoing capital gains/dividend taxes'
+        ],
+        quotable: '"The trade-off for full control is that you are also the chief risk officer."'
+    },
+    income: {
+        title: 'Joint Life SPIA with Cash Refund',
+        icon: 'I',
+        tagline: 'A contract for guaranteed lifetime income and certainty.',
+        description: 'This strategy is for the risk-averse, whose primary goal is to eliminate financial market risk and the fear of outliving their money. It creates a guaranteed, private pension that provides a predictable paycheck for as long as either spouse lives, while the Cash Refund feature ensures your original principal is never lost.',
+        pros: [
+            'Guaranteed income for both lives',
+            'Eliminates market & sequence of returns risk',
+            'Simple to manage once established',
+            'Principal is protected via Cash Refund'
+        ],
+        cons: [
+            'Decision is irrevocable and illiquid',
+            'Fixed payments lose purchasing power to inflation',
+            'No potential for market growth',
+            'Guarantees depend on the insurer’s solvency'
+        ],
+        quotable: '"You are essentially buying a guaranteed paycheck for life from an insurance company."'
+    }
+};
+
+const app = {
+    state: {
+        currentView: 'legacy'
+    },
+    elements: {
+        contentDisplay: document.getElementById('content-display'),
+        viewTabs: document.querySelectorAll('.view-tab'),
+        radarChart: null,
+        legacyChart: null
+    },
+    init() {
+        this.selectView('legacy');
+        this.createRadarChart();
+        this.createLegacyChart();
+    },
+    selectView(view) {
+        this.state.currentView = view;
+        this.render();
+    },
+    render() {
+        this.updateTabs();
+        this.updateContent();
+    },
+    updateTabs() {
+        this.elements.viewTabs.forEach(tab => {
+            if (tab.dataset.view === this.state.currentView) {
+                tab.classList.remove('tab-inactive');
+                tab.classList.add('tab-active');
+            } else {
+                tab.classList.remove('tab-active');
+                tab.classList.add('tab-inactive');
+            }
+        });
+    },
+    updateContent() {
+        const data = appData[this.state.currentView];
+        const html = `
+            <div class="text-center content-fade-in">
+                <div class="icon-box font-lora">${data.icon}</div>
+                <h2 class="text-3xl font-bold text-slate-900">${data.title}</h2>
+                <p class="text-lg font-medium text-slate-500 mt-1 font-lora">${data.tagline}</p>
+            </div>
+            <div class="mt-8 content-fade-in">
+                <p class="text-lg text-slate-700 leading-relaxed max-w-3xl mx-auto text-center">${data.description}</p>
+                 <div class="text-center mt-6 italic text-xl text-slate-800 p-4 bg-slate-100 rounded-lg max-w-3xl mx-auto font-lora">
+                    “${data.quotable}”
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+                    <div class="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
+                        <h4 class="font-semibold text-xl text-green-800 mb-4 font-lora">Advantages</h4>
+                        <ul class="space-y-3">
+                            ${data.pros.map(pro => `<li class="flex items-start"><span class="text-green-600 mr-3 mt-1">✔</span><span>${pro}</span></li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="bg-red-50 p-6 rounded-lg border-l-4 border-red-500">
+                        <h4 class="font-semibold text-xl text-red-800 mb-4 font-lora">Considerations</h4>
+                        <ul class="space-y-3">
+                            ${data.cons.map(con => `<li class="flex items-start"><span class="text-red-600 mr-3 mt-1">✖</span><span>${con}</span></li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        this.elements.contentDisplay.innerHTML = html;
+    },
+    createRadarChart() {
+        const ctx = document.getElementById('comparisonRadarChart').getContext('2d');
+        const labels = ['Legacy Potential', 'Income Certainty', 'Liquidity', 'Growth Potential', 'Client Control', 'Risk Transfer'];
+
+        this.elements.radarChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'S-VUL',
+                        data: [10, 3, 5, 9, 7, 5],
+                        backgroundColor: 'rgba(212, 175, 55, 0.2)',
+                        borderColor: 'rgba(212, 175, 55, 1)',
+                        pointBackgroundColor: 'rgba(212, 175, 55, 1)',
+                    },
+                    {
+                        label: 'Taxable Portfolio',
+                        data: [6, 2, 10, 10, 10, 1],
+                        backgroundColor: 'rgba(13, 71, 161, 0.2)',
+                        borderColor: 'rgba(13, 71, 161, 1)',
+                        pointBackgroundColor: 'rgba(13, 71, 161, 1)',
+                    },
+                     {
+                        label: 'SPIA',
+                        data: [4, 10, 1, 1, 1, 10],
+                        backgroundColor: 'rgba(117, 117, 117, 0.2)',
+                        borderColor: 'rgba(117, 117, 117, 1)',
+                        pointBackgroundColor: 'rgba(117, 117, 117, 1)',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 0,
+                        suggestedMax: 10,
+                        pointLabels: { font: { size: 12, weight: '700', family: 'Lato' } },
+                        grid: { color: '#CFD8DC' },
+                        ticks: { display: false, stepSize: 2 }
+                    }
+                },
+                plugins: { legend: { position: 'top', labels: { font: { family: 'Lato', size: 14 } } } }
+            },
+        });
+    },
+    createLegacyChart() {
+        const ctx = document.getElementById('legacyBarChart').getContext('2d');
+        this.elements.legacyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['S-VUL', 'Taxable Portfolio', 'SPIA'],
+                datasets: [{
+                    label: 'Potential Legacy Value ($)',
+                    data: [4500000, 2500000, 2000000],
+                    backgroundColor: [
+                        'rgba(212, 175, 55, 0.7)',
+                        'rgba(13, 71, 161, 0.7)',
+                        'rgba(117, 117, 117, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(212, 175, 55, 1)',
+                        'rgba(13, 71, 161, 1)',
+                        'rgba(117, 117, 117, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, ticks: { callback: (value) => '$' + (value / 1000000) + 'M', font: { family: 'Lato' } } },
+                    y: { ticks: { font: { family: 'Lato', size: 14 } } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(context.raw)
+                        }
+                    }
+                }
+            }
+        });
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+});
+</script>
+
+</body>
+</html>
